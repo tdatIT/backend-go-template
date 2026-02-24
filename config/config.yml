@@ -1,0 +1,54 @@
+# Sample configuration for local/dev
+server:
+  name: "backend-go"
+  buildVer: "ENV_BUILD_VER"
+  httpPort: "5000"
+  grpcPort: "9000"
+  requestTimeout: "8s"
+  readTimeout: "5s"
+  writeTimeout: "5s"
+  defaultTimeout: "10s"
+  debugMode: true
+
+database:
+  host: "localhost"
+  port: 5432
+  userName: "postgres"
+  password: "123123@Admin"
+  database: "backend_go_db"
+  schema: "public"
+  maxOpenConns: 10
+  maxIdleConns: 5
+  connMaxLifetime: "30m"
+  connMaxIdleTime: "10m"
+  #options: "sslmode=disable"
+
+redis:
+  # mode: standalone | cluster | sentinel
+  mode: "standalone"
+  username: ""
+  password: ""
+  poolSize: 10
+  db: 0
+  masterName: ""
+  address:
+    - "127.0.0.1:6379"
+  maxIdleConn: 5
+  minIdleConn: 1
+  connMaxIdleTime: "10m"
+  connMaxLifeTime: "30m"
+  tls:
+    enabled: false
+    insecureSkipVerify: false
+    certFilePath: ""
+
+logger:
+  # debug | info | warn | error
+  level: "info"
+
+auth:
+  jwtSecret: "change_me"
+  accessTokenTTL: "15m"
+  refreshTokenTTL: "720h"
+  googleClientID: ""
+
