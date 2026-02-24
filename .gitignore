@@ -1,0 +1,26 @@
+# Binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test output
+*.test
+*.out
+
+# Go workspace
+*.swp
+*.swo
+*.tmp
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

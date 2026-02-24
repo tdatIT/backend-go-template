@@ -1,0 +1,12 @@
+.git
+.gitignore
+.github
+*.md
+Dockerfile
+Makefile
+bin/
+**/*.log
+**/*.tmp
+**/*.swp
+**/*.swo
+**/.DS_Store
