@@ -4,14 +4,20 @@ import (
 	"errors"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
+var (
+	ErrUnexpectedSigningMethod = errors.New("unexpected signing method")
+	ErrInvalidToken            = errors.New("invalid token")
+)
+
 type TokenManager interface {
-	GenerateTokens(subjectID uint64) (accessToken string, refreshToken string, accessExp time.Time, err error)
+	GenerateTokens(subjectID uint64, sessionID uint64, refreshJTI string) (accessToken string, refreshToken string, accessExp time.Time, err error)
 	VerifyToken(tokenString string) (*CustomClaims, error)
 }
 
@@ -28,7 +34,7 @@ type JWTTokenManager struct {
 }
 
 type CustomClaims struct {
-	SubID uint64 `json:"sub_id"`
+	SessionID uint64 `json:"sid"`
 	jwt.RegisteredClaims
 }
 
@@ -55,17 +61,17 @@ func NewJWTTokenManager(cfg JWTConfig) *JWTTokenManager {
 	}
 }
 
-func (m *JWTTokenManager) GenerateTokens(subjectID uint64) (string, string, time.Time, error) {
+func (m *JWTTokenManager) GenerateTokens(subjectID uint64, sessionID uint64, refreshJTI string) (string, string, time.Time, error) {
 	now := time.Now()
 	accessExp := now.Add(m.accessTokenTTL)
 	refreshExp := now.Add(m.refreshTokenTTL)
 
-	accessToken, err := m.signToken(subjectID, accessExp)
+	accessToken, err := m.signToken(subjectID, sessionID, uuid.NewString(), accessExp)
 	if err != nil {
 		return "", "", time.Time{}, err
 	}
 
-	refreshToken, err := m.signToken(subjectID, refreshExp)
+	refreshToken, err := m.signToken(subjectID, sessionID, refreshJTI, refreshExp)
 	if err != nil {
 		return "", "", time.Time{}, err
 	}
@@ -73,11 +79,12 @@ func (m *JWTTokenManager) GenerateTokens(subjectID uint64) (string, string, time
 	return accessToken, refreshToken, accessExp, nil
 }
 
-func (m *JWTTokenManager) signToken(subjectID uint64, exp time.Time) (string, error) {
+func (m *JWTTokenManager) signToken(subjectID uint64, sessionID uint64, tokenID string, exp time.Time) (string, error) {
 	claims := CustomClaims{
-		SubID: subjectID,
+		SessionID: sessionID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        uuid.NewString(),
+			Subject:   strconv.FormatUint(subjectID, 10),
+			ID:        tokenID,
 			ExpiresAt: jwt.NewNumericDate(exp),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
@@ -91,7 +98,7 @@ func (m *JWTTokenManager) VerifyToken(tokenString string) (*CustomClaims, error)
 	claims := new(CustomClaims)
 	parsed, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
+			return nil, ErrUnexpectedSigningMethod
 		}
 		return m.secret, nil
 	})
@@ -99,7 +106,7 @@ func (m *JWTTokenManager) VerifyToken(tokenString string) (*CustomClaims, error)
 		return nil, err
 	}
 	if !parsed.Valid {
-		return nil, errors.New("invalid token")
+		return nil, ErrInvalidToken
 	}
 
 	return claims, nil

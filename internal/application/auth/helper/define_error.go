@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrInvalidUserOrPwd = &svcerr.SvcErr{
+	ErrInvalidUserOrPwd = &svcerr.Error{
 		Message:    "Invalid username or password",
 		VIMessage:  "Tên đăng nhập hoặc mật khẩu không hợp lệ",
 		Code:       "AUTH-001",
@@ -16,7 +16,7 @@ var (
 		GRPCCode:   codes.Unauthenticated,
 	}
 
-	ErrInvalidToken = &svcerr.SvcErr{
+	ErrInvalidToken = &svcerr.Error{
 		Message:    "Invalid token",
 		VIMessage:  "Token không hợp lệ",
 		Code:       "AUTH-002",
@@ -24,7 +24,7 @@ var (
 		GRPCCode:   codes.Unauthenticated,
 	}
 
-	ErrUserAlreadyExists = &svcerr.SvcErr{
+	ErrUserAlreadyExists = &svcerr.Error{
 		Message:    "User already exists",
 		VIMessage:  "Nguoi dung da ton tai",
 		Code:       "AUTH-003",

@@ -2,20 +2,21 @@
 server:
   name: "backend-go"
   buildVer: "ENV_BUILD_VER"
-  httpPort: "5000"
-  grpcPort: "9000"
+  httpPort: ":5000"
+  grpcPort: ":9000"
   requestTimeout: "8s"
   readTimeout: "5s"
   writeTimeout: "5s"
   defaultTimeout: "10s"
-  debugMode: true
+  httpClientTimeout: "5s"
+  debugMode: false
 
 database:
   host: "localhost"
   port: 5432
   userName: "postgres"
   password: "123123@Admin"
-  database: "backend_go_db"
+  database: "backend_go"
   schema: "public"
   maxOpenConns: 10
   maxIdleConns: 5

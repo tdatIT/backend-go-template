@@ -9,7 +9,6 @@ type User struct {
 	Email             string     `json:"email" gorm:"size:255;uniqueIndex;not null"`
 	Username          string     `json:"username" gorm:"size:50;uniqueIndex;not null"`
 	PasswordHash      string     `json:"-" gorm:"size:255;not null"`
-	RefreshTokenHash  string     `json:"-" gorm:"size:255"`
 	OidcProvider      string     `json:"oidc_provider,omitempty" gorm:"size:50;index:idx_oidc_provider_subject"`
 	OidcSubject       string     `json:"oidc_subject,omitempty" gorm:"size:255;index:idx_oidc_provider_subject"`
 	PasswordChangedAt *time.Time `json:"password_changed_at,omitempty"`

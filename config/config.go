@@ -19,15 +19,16 @@ type ServiceConfig struct {
 }
 
 type Server struct {
-	Name           string
-	BuildVer       string
-	HttpPort       string
-	GrpcPort       string
-	RequestTimeout time.Duration
-	ReadTimeout    time.Duration
-	WriteTimeout   time.Duration
-	DefaultTimeout time.Duration
-	DebugMode      bool
+	Name              string
+	BuildVer          string
+	HttpPort          string
+	GrpcPort          string
+	RequestTimeout    time.Duration
+	ReadTimeout       time.Duration
+	WriteTimeout      time.Duration
+	DefaultTimeout    time.Duration
+	HttpClientTimeout time.Duration
+	DebugMode         bool
 }
 
 type Database struct {

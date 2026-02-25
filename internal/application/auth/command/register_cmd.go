@@ -3,13 +3,14 @@ package command
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/tdatIT/backend-go/internal/application/auth/helper"
 	"github.com/tdatIT/backend-go/internal/domain/dtos/userdto"
 	"github.com/tdatIT/backend-go/internal/domain/models"
+	"github.com/tdatIT/backend-go/internal/infras/repository/session"
 	"github.com/tdatIT/backend-go/internal/infras/repository/user"
 	"github.com/tdatIT/backend-go/internal/infras/security"
 	"github.com/tdatIT/backend-go/pkgs/decorator"
@@ -20,12 +21,14 @@ type IRegisterCommand decorator.CommandReturnHandler[*userdto.RegisterReq, *user
 
 type registerCommand struct {
 	userRepo     user.Repository
+	sessionRepo  session.Repository
 	tokenManager security.TokenManager
 }
 
-func NewRegisterCommand(userRepo user.Repository, tokenManager security.TokenManager) IRegisterCommand {
+func NewRegisterCommand(userRepo user.Repository, sessionRepo session.Repository, tokenManager security.TokenManager) IRegisterCommand {
 	return &registerCommand{
 		userRepo:     userRepo,
+		sessionRepo:  sessionRepo,
 		tokenManager: tokenManager,
 	}
 }
@@ -67,21 +70,22 @@ func (r registerCommand) Handle(ctx context.Context, req *userdto.RegisterReq) (
 		return nil, err
 	}
 
-	accessToken, refreshToken, accessExp, err := r.tokenManager.GenerateTokens(item.ID)
-	if err != nil {
+	refreshJTI := uuid.NewString()
+	now := time.Now()
+	sessionItem := &models.Session{
+		UserID:     item.ID,
+		RefreshJTI: refreshJTI,
+		UserAgent:  req.UserAgent,
+		IPAddress:  req.IPAddress,
+		IsActive:   true,
+		LastUsedAt: &now,
+	}
+	if err := r.sessionRepo.Create(ctx, sessionItem); err != nil {
 		return nil, err
 	}
 
-	refreshHash, err := security.HashPassword(refreshToken, security.DefaultCost)
+	accessToken, refreshToken, accessExp, err := r.tokenManager.GenerateTokens(item.ID, sessionItem.ID, refreshJTI)
 	if err != nil {
-		return nil, err
-	}
-
-	item.RefreshTokenHash = refreshHash
-	if err := r.userRepo.Update(ctx, item); err != nil {
-		slog.Error("failed to update refresh token for user",
-			slog.Uint64("userID", item.ID),
-			slog.String("error", err.Error()))
 		return nil, err
 	}
 

@@ -60,6 +60,7 @@ func newGormInstance(c Config) (ORM, error) {
 	// migration tables
 	err = db.AutoMigrate(
 		&models.User{},
+		&models.Session{},
 		&models.TaskGroup{},
 		&models.Task{},
 	)
