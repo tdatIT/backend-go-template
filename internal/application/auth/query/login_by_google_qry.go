@@ -28,14 +28,14 @@ type loginByGoogleQuery struct {
 	userRepo     user.Repository
 	sessionRepo  session.Repository
 	tokenManager security.TokenManager
-	oidcProvider *oidc.GoogleOIDCProvider
+	oidcProvider oidc.GoogleOIDCVerifier
 }
 
 func NewLoginByGoogleQuery(
 	userRepo user.Repository,
 	sessionRepo session.Repository,
 	tokenManager security.TokenManager,
-	oidcProvider *oidc.GoogleOIDCProvider,
+	oidcProvider oidc.GoogleOIDCVerifier,
 	config *config.ServiceConfig,
 ) ILoginByGoogleQuery {
 	return &loginByGoogleQuery{

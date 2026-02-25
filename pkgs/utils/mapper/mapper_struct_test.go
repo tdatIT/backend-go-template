@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tdatIT/backend-go/pkgs/utils/mapper"
 )
 
 // Test for BindingStruct function

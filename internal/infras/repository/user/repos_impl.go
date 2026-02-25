@@ -84,7 +84,7 @@ func (r reposImpl) FindAllAndCount(ctx context.Context, params GetListParams) ([
 	db := r.orm.GormDB().WithContext(ctx).Model(&models.User{})
 
 	err := db.Count(&count).Error
-	if err.Error != nil {
+	if err != nil {
 		return nil, 0, err
 	}
 

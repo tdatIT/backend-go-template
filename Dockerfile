@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.23-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /src
 
@@ -14,7 +14,7 @@ COPY . .
 # Build a smaller static binary
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -o /out/app ./cmd/main.go
 
-FROM alpine:3.20
+FROM alpine:3.21.6
 
 RUN apk add --no-cache ca-certificates tzdata
 

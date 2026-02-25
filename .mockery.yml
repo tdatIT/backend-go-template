@@ -1,0 +1,37 @@
+with-expecter: false
+case: underscore
+dir: mocks
+outpkg: mocks
+packages:
+  github.com/tdatIT/backend-go/internal/infras/repository/user:
+    interfaces:
+      - Repository
+  github.com/tdatIT/backend-go/internal/infras/repository/session:
+    interfaces:
+      - Repository
+  github.com/tdatIT/backend-go/internal/infras/repository/task:
+    interfaces:
+      - Repository
+  github.com/tdatIT/backend-go/internal/infras/repository/taskgroup:
+    interfaces:
+      - Repository
+  github.com/tdatIT/backend-go/internal/infras/security:
+    interfaces:
+      - TokenManager
+  github.com/tdatIT/backend-go/internal/infras/httpclient/oidc:
+    interfaces:
+      - GoogleOIDCVerifier
+  github.com/tdatIT/backend-go/pkgs/cache:
+    interfaces:
+      - Cache
+  github.com/tdatIT/backend-go/pkgs/db/orm:
+    interfaces:
+      - ORM
+  github.com/tdatIT/backend-go/pkgs/db/rdclient:
+    interfaces:
+      - RedisClient
+  github.com/tdatIT/backend-go/pkgs/decorator:
+    interfaces:
+      - CommandHandler
+      - CommandReturnHandler
+      - QueryHandler

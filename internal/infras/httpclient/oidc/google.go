@@ -18,6 +18,10 @@ type GoogleIDTokenInfo struct {
 	Name          string `json:"name"`
 }
 
+type GoogleOIDCVerifier interface {
+	VerifyIDToken(ctx context.Context, idToken string) (*GoogleIDTokenInfo, error)
+}
+
 type GoogleOIDCProvider struct {
 	client *resty.Client
 }
