@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"strconv"
 
 	"github.com/tdatIT/backend-go/internal/application/auth/helper"
 	"github.com/tdatIT/backend-go/internal/domain/dtos/userdto"
@@ -38,16 +37,16 @@ func (v verifyTokenQuery) Handle(ctx context.Context, req *userdto.VerifyTokenRe
 	sessionItem, err := v.sessionRepo.FindByID(ctx, claims.SessionID)
 	if err != nil {
 		slog.Error("failed to find session by id",
-			slog.Uint64("sess_id", claims.SessionID),
+			slog.String("sess_id", claims.SessionID),
 			slog.String("error", err.Error()))
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, helper.ErrInvalidToken
 		}
 		return nil, err
 	}
-	if !sessionItem.IsActive || strconv.Itoa(int(sessionItem.UserID)) != claims.Subject {
+	if !sessionItem.IsActive || claims.Subject == "" {
 		slog.Warn("invalid session for access token",
-			slog.Uint64("sess_id", claims.SessionID),
+			slog.String("sess_id", claims.SessionID),
 			slog.Uint64("user_id", sessionItem.UserID))
 		return nil, helper.ErrInvalidToken
 	}

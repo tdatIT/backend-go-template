@@ -9,6 +9,7 @@ import (
 	"github.com/tdatIT/backend-go/internal/domain/models"
 	"github.com/tdatIT/backend-go/pkgs/cache"
 	"github.com/tdatIT/backend-go/pkgs/db/orm"
+	"github.com/tdatIT/backend-go/pkgs/utils/genid"
 	"gorm.io/gorm"
 )
 
@@ -27,6 +28,10 @@ func NewRepository(orm orm.ORM, cacheClient cache.Cache, sessionTTL time.Duratio
 }
 
 func (r reposImpl) Create(ctx context.Context, item *models.Session) error {
+	if item.ID == "" {
+		item.ID = genid.GenerateNanoID()
+	}
+
 	err := r.orm.GormDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		return tx.Create(item).Error
 	})
@@ -37,7 +42,7 @@ func (r reposImpl) Create(ctx context.Context, item *models.Session) error {
 	return r.setCache(ctx, item)
 }
 
-func (r reposImpl) FindByID(ctx context.Context, id uint64) (*models.Session, error) {
+func (r reposImpl) FindByID(ctx context.Context, id string) (*models.Session, error) {
 	if cached, err := r.getCache(ctx, r.cacheKeyByID(id)); err == nil {
 		return cached, nil
 	}
@@ -53,10 +58,6 @@ func (r reposImpl) FindByID(ctx context.Context, id uint64) (*models.Session, er
 }
 
 func (r reposImpl) FindByRefreshJTI(ctx context.Context, jti string) (*models.Session, error) {
-	if cached, err := r.getCache(ctx, r.cacheKeyByJTI(jti)); err == nil {
-		return cached, nil
-	}
-
 	item := new(models.Session)
 	err := r.orm.GormDB().WithContext(ctx).
 		Where("refresh_jti = ?", jti).
@@ -69,7 +70,7 @@ func (r reposImpl) FindByRefreshJTI(ctx context.Context, jti string) (*models.Se
 	return item, nil
 }
 
-func (r reposImpl) FindBySessionID(ctx context.Context, sessionID uint64) (*models.Session, error) {
+func (r reposImpl) FindBySessionID(ctx context.Context, sessionID string) (*models.Session, error) {
 	if cached, err := r.getCache(ctx, r.cacheKeyByID(sessionID)); err == nil {
 		return cached, nil
 	}
@@ -95,12 +96,13 @@ func (r reposImpl) Update(ctx context.Context, item *models.Session) error {
 	return r.setCache(ctx, item)
 }
 
-func (r reposImpl) RotateRefreshJTI(ctx context.Context, id uint64, oldJTI string, newJTI string) error {
+func (r reposImpl) RotateRefreshJTI(ctx context.Context, id string, oldJTI string, newJTI string) error {
 	item := new(models.Session)
 	if err := r.orm.GormDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(item, id).Error; err != nil {
+		if err := tx.Where("id = ?", id).First(item).Error; err != nil {
 			return err
 		}
+
 		if item.RefreshJTI != oldJTI {
 			return gorm.ErrRecordNotFound
 		}
@@ -112,14 +114,10 @@ func (r reposImpl) RotateRefreshJTI(ctx context.Context, id uint64, oldJTI strin
 		return err
 	}
 
-	if r.cache != nil && oldJTI != "" && oldJTI != newJTI {
-		_ = r.cache.Delete(ctx, r.cacheKeyByJTI(oldJTI))
-	}
-
 	return r.setCache(ctx, item)
 }
 
-func (r reposImpl) Deactivate(ctx context.Context, id uint64) error {
+func (r reposImpl) Deactivate(ctx context.Context, id string) error {
 	item := new(models.Session)
 	if err := r.orm.GormDB().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(item, id).Error; err != nil {
@@ -136,12 +134,8 @@ func (r reposImpl) Deactivate(ctx context.Context, id uint64) error {
 	return r.setCache(ctx, item)
 }
 
-func (r reposImpl) cacheKeyByID(id uint64) string {
-	return fmt.Sprintf("session:id:%d", id)
-}
-
-func (r reposImpl) cacheKeyByJTI(jti string) string {
-	return fmt.Sprintf("session:jti:%s", jti)
+func (r reposImpl) cacheKeyByID(id string) string {
+	return fmt.Sprintf("session:id:%s", id)
 }
 
 func (r reposImpl) getCache(ctx context.Context, key string) (*models.Session, error) {
@@ -163,21 +157,10 @@ func (r reposImpl) getCache(ctx context.Context, key string) (*models.Session, e
 }
 
 func (r reposImpl) setCache(ctx context.Context, item *models.Session) error {
-	if r.cache == nil || item == nil {
-		return nil
-	}
-
 	data, err := sonic.Marshal(item)
 	if err != nil {
 		return err
 	}
 
-	if err := r.cache.Set(ctx, r.cacheKeyByID(item.ID), data, r.sessionTTL); err != nil {
-		return err
-	}
-	if item.RefreshJTI == "" {
-		return nil
-	}
-
-	return r.cache.Set(ctx, r.cacheKeyByJTI(item.RefreshJTI), data, r.sessionTTL)
+	return r.cache.Set(ctx, r.cacheKeyByID(item.ID), data, r.sessionTTL)
 }

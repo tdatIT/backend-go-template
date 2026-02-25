@@ -2,8 +2,8 @@ package userdto
 
 type LoginByGoogleReq struct {
 	IDToken   string `json:"id_token" validate:"required"`
-	UserAgent string
-	IPAddress string
+	UserAgent string `json:"user_agent,omitempty"`
+	IPAddress string `json:"ip_address,omitempty"`
 }
 
 type VerifyTokenReq struct {
@@ -12,7 +12,7 @@ type VerifyTokenReq struct {
 
 type VerifyTokenRes struct {
 	Sub       string `json:"sub"`
-	SessionID uint64 `json:"sid"`
+	SessionID string `json:"sid"`
 	JTI       string `json:"jti"`
 	ExpiresAt int64  `json:"exp"`
 }
@@ -22,16 +22,17 @@ type RegisterReq struct {
 	Password  string `json:"password" validate:"required"`
 	FirstName string `json:"first_name" validate:"required"`
 	LastName  string `json:"last_name,omitempty"`
-	UserAgent string `json:"-"`
-	IPAddress string `json:"-"`
+	UserAgent string `json:"user_agent,omitempty"`
+	IPAddress string `json:"ip_address,omitempty"`
 }
 
 type LogoutReq struct {
-	AccessToken string
+	AccessToken  string `json:"access_token" validate:"required"`
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
 type RefreshTokenReq struct {
-	RefreshToken string
+	RefreshToken string `json:"refresh_token" validate:"required"`
 }
 
 type RefreshTokenRes struct {

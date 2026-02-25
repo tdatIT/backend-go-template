@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log/slog"
+	"strings"
 
 	"github.com/labstack/echo/v5"
 	"github.com/tdatIT/backend-go/internal/application/auth"
@@ -84,17 +85,32 @@ func (h *AuthHandler) Register(c *echo.Context) error {
 	return helper.WriteSuccess(c, res)
 }
 
-func (h *AuthHandler) RefreshToken(c *echo.Context) error {
-	bearToken := c.Request().Header.Get("Authorization")
-	if bearToken == "" {
+func extractBearerToken(c *echo.Context) (string, error) {
+	bearer := c.Request().Header.Get("Authorization")
+	if bearer == "" {
 		slog.Warn("missing Authorization header")
-		return helper.ErrMissingAuthHeader
+		return "", helper.ErrMissingAuthHeader
 	}
 
-	token := bearToken[len("Bearer "):]
+	const prefix = "Bearer "
+	if !strings.HasPrefix(bearer, prefix) {
+		slog.Warn("invalid Authorization header format")
+		return "", helper.ErrInvalidAuthHeader
+	}
+
+	token := strings.TrimSpace(bearer[len(prefix):])
 	if token == "" {
 		slog.Warn("invalid Authorization header format")
-		return helper.ErrInvalidAuthHeader
+		return "", helper.ErrInvalidAuthHeader
+	}
+
+	return token, nil
+}
+
+func (h *AuthHandler) RefreshToken(c *echo.Context) error {
+	token, err := extractBearerToken(c)
+	if err != nil {
+		return err
 	}
 
 	req := &userdto.RefreshTokenReq{RefreshToken: token}
@@ -109,16 +125,9 @@ func (h *AuthHandler) RefreshToken(c *echo.Context) error {
 }
 
 func (h *AuthHandler) Logout(c *echo.Context) error {
-	bearToken := c.Request().Header.Get("Authorization")
-	if bearToken == "" {
-		slog.Warn("missing Authorization header")
-		return helper.ErrMissingAuthHeader
-	}
-
-	token := bearToken[len("Bearer "):]
-	if token == "" {
-		slog.Warn("invalid Authorization header format")
-		return helper.ErrInvalidAuthHeader
+	token, err := extractBearerToken(c)
+	if err != nil {
+		return err
 	}
 
 	req := &userdto.LogoutReq{AccessToken: token}
@@ -129,33 +138,4 @@ func (h *AuthHandler) Logout(c *echo.Context) error {
 	}
 
 	return helper.WriteSuccess(c, nil)
-}
-
-func (h *AuthHandler) VerifyToken(c *echo.Context) error {
-	bearToken := c.Request().Header.Get("Authorization")
-	if bearToken == "" {
-		slog.Warn("missing Authorization header")
-		return helper.ErrMissingAuthHeader
-	}
-
-	token := bearToken[len("Bearer "):]
-	if token == "" {
-		slog.Warn("invalid Authorization header format")
-		return helper.ErrInvalidAuthHeader
-	}
-
-	req := &userdto.VerifyTokenReq{AccessToken: bearToken}
-
-	if err := valid.GetValidator().Validate(req); err != nil {
-		slog.Warn("validation request body failed", slog.String("error", err.Error()))
-		return err
-	}
-
-	res, err := h.app.Queries.VerifyToken.Handle(c.Request().Context(), req)
-	if err != nil {
-		slog.Error("failed to verify token", slog.String("error", err.Error()))
-		return err
-	}
-
-	return helper.WriteSuccess(c, res)
 }

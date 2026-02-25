@@ -23,7 +23,8 @@ func NewJsonSlogHandler(config *SlogConfig) *slog.JSONHandler {
 	}
 
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: parseSlogLevel(config.Level),
+		Level:     parseSlogLevel(config.Level),
+		AddSource: true,
 	})
 
 	if config.ServiceName == "" {

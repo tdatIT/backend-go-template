@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/tdatIT/backend-go/internal/infras/repository/user"
 	"github.com/tdatIT/backend-go/internal/infras/security"
 	"github.com/tdatIT/backend-go/pkgs/decorator"
+	"github.com/tdatIT/backend-go/pkgs/utils/genid"
+	"gorm.io/gorm"
 )
 
 type ILoginByUsrnameAndPwdQuery decorator.QueryHandler[*userdto.LoginByUserPassReq, *userdto.LoginRes]
@@ -38,6 +41,10 @@ func NewLoginByUsrnameAndPwdQuery(
 func (l loginByUsrnameAndPwdQuery) Handle(ctx context.Context, req *userdto.LoginByUserPassReq) (*userdto.LoginRes, error) {
 	account, err := l.userRepo.FindByUsername(ctx, req.Username)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, helper.ErrUserNotFound
+		}
+
 		slog.Error("failed to find user by username",
 			slog.String("username", req.Username),
 			slog.String("error", err.Error()))
@@ -53,6 +60,7 @@ func (l loginByUsrnameAndPwdQuery) Handle(ctx context.Context, req *userdto.Logi
 
 	refreshJTI := uuid.NewString()
 	sessionItem := &models.Session{
+		ID:         genid.GenerateNanoID(),
 		UserID:     account.ID,
 		RefreshJTI: refreshJTI,
 		UserAgent:  req.UserAgent,

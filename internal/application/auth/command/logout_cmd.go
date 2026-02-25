@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"strconv"
 
 	"github.com/tdatIT/backend-go/internal/application/auth/helper"
 	"github.com/tdatIT/backend-go/internal/domain/dtos/userdto"
@@ -38,7 +37,7 @@ func (l logoutCommand) Handle(ctx context.Context, req *userdto.LogoutReq) error
 	sessionItem, err := l.sessionRepo.FindBySessionID(ctx, claims.SessionID)
 	if err != nil {
 		slog.Warn("failed to find session by refresh jti",
-			slog.Uint64("sess_id", claims.SessionID),
+			slog.String("sess_id", claims.SessionID),
 			slog.String("error", err.Error()))
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return helper.ErrInvalidToken
@@ -46,9 +45,9 @@ func (l logoutCommand) Handle(ctx context.Context, req *userdto.LogoutReq) error
 		return err
 	}
 
-	if sessionItem.ID != claims.SessionID || strconv.Itoa(int(sessionItem.UserID)) != claims.Subject || !sessionItem.IsActive {
+	if sessionItem.ID != claims.SessionID || claims.Subject == "" || !sessionItem.IsActive {
 		slog.Warn("invalid session for refresh token",
-			slog.Uint64("sess_id", claims.SessionID),
+			slog.String("sess_id", claims.SessionID),
 			slog.Uint64("user_id", sessionItem.UserID),
 			slog.Bool("is_active", sessionItem.IsActive))
 		return helper.ErrInvalidToken
@@ -56,7 +55,7 @@ func (l logoutCommand) Handle(ctx context.Context, req *userdto.LogoutReq) error
 
 	if err := l.sessionRepo.Deactivate(ctx, sessionItem.ID); err != nil {
 		slog.Error("failed to deactivate session",
-			slog.Uint64("sess_id", sessionItem.ID),
+			slog.String("sess_id", sessionItem.ID),
 			slog.String("error", err.Error()))
 		return err
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,10 +36,11 @@ func (r refreshTokenQuery) Handle(ctx context.Context, req *userdto.RefreshToken
 		return nil, helper.ErrInvalidToken
 	}
 
-	sessionItem, err := r.sessionRepo.FindByRefreshJTI(ctx, claims.ID)
+	sessionItem, err := r.sessionRepo.FindBySessionID(ctx, claims.SessionID)
 	if err != nil {
 		slog.Warn("failed to find session by refresh JTI",
 			slog.String("refresh_jti", claims.ID),
+			slog.String("sess_id", claims.SessionID),
 			slog.String("error", err.Error()))
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, helper.ErrInvalidToken
@@ -48,11 +48,13 @@ func (r refreshTokenQuery) Handle(ctx context.Context, req *userdto.RefreshToken
 		return nil, err
 	}
 
-	if !sessionItem.IsActive || sessionItem.ID != claims.SessionID || strconv.Itoa(int(sessionItem.UserID)) != claims.Subject {
+	if !sessionItem.IsActive || sessionItem.ID != claims.SessionID ||
+		claims.Subject == "" || sessionItem.RefreshJTI != claims.ID {
 		slog.Warn("invalid session for refresh token",
-			slog.Uint64("sess_id", sessionItem.ID),
+			slog.String("sess_id", sessionItem.ID),
 			slog.Uint64("user_id", sessionItem.UserID),
 			slog.String("token_sub", claims.Subject),
+			slog.String("jti", sessionItem.RefreshJTI),
 			slog.String("error", "session is not active or does not match token claims"))
 		return nil, helper.ErrInvalidToken
 	}
@@ -62,14 +64,14 @@ func (r refreshTokenQuery) Handle(ctx context.Context, req *userdto.RefreshToken
 	if err != nil {
 		slog.Error("failed to generate new tokens",
 			slog.Uint64("user_id", sessionItem.UserID),
-			slog.Uint64("sess_id", sessionItem.ID),
+			slog.String("sess_id", sessionItem.ID),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
 
 	if err := r.sessionRepo.RotateRefreshJTI(ctx, sessionItem.ID, sessionItem.RefreshJTI, newRefreshJTI); err != nil {
 		slog.Error("failed to rotate refresh JTI",
-			slog.Uint64("sess_id", sessionItem.ID),
+			slog.String("sess_id", sessionItem.ID),
 			slog.String("old_jti", sessionItem.RefreshJTI),
 			slog.String("new_jti", newRefreshJTI),
 			slog.String("error", err.Error()))

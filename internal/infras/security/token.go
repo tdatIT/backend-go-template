@@ -17,7 +17,7 @@ var (
 )
 
 type TokenManager interface {
-	GenerateTokens(subjectID uint64, sessionID uint64, refreshJTI string) (accessToken string, refreshToken string, accessExp time.Time, err error)
+	GenerateTokens(subjectID uint64, sessionID string, refreshJTI string) (accessToken string, refreshToken string, accessExp time.Time, err error)
 	VerifyToken(tokenString string) (*CustomClaims, error)
 }
 
@@ -34,7 +34,7 @@ type JWTTokenManager struct {
 }
 
 type CustomClaims struct {
-	SessionID uint64 `json:"sid"`
+	SessionID string `json:"sid"`
 	jwt.RegisteredClaims
 }
 
@@ -61,7 +61,7 @@ func NewJWTTokenManager(cfg JWTConfig) *JWTTokenManager {
 	}
 }
 
-func (m *JWTTokenManager) GenerateTokens(subjectID uint64, sessionID uint64, refreshJTI string) (string, string, time.Time, error) {
+func (m *JWTTokenManager) GenerateTokens(subjectID uint64, sessionID string, refreshJTI string) (string, string, time.Time, error) {
 	now := time.Now()
 	accessExp := now.Add(m.accessTokenTTL)
 	refreshExp := now.Add(m.refreshTokenTTL)
@@ -79,7 +79,7 @@ func (m *JWTTokenManager) GenerateTokens(subjectID uint64, sessionID uint64, ref
 	return accessToken, refreshToken, accessExp, nil
 }
 
-func (m *JWTTokenManager) signToken(subjectID uint64, sessionID uint64, tokenID string, exp time.Time) (string, error) {
+func (m *JWTTokenManager) signToken(subjectID uint64, sessionID string, tokenID string, exp time.Time) (string, error) {
 	claims := CustomClaims{
 		SessionID: sessionID,
 		RegisteredClaims: jwt.RegisteredClaims{

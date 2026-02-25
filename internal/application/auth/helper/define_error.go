@@ -26,9 +26,17 @@ var (
 
 	ErrUserAlreadyExists = &svcerr.Error{
 		Message:    "User already exists",
-		VIMessage:  "Nguoi dung da ton tai",
+		VIMessage:  "Người dùng đã tồn tại",
 		Code:       "AUTH-003",
 		HTTPStatus: http.StatusConflict,
 		GRPCCode:   codes.AlreadyExists,
+	}
+
+	ErrUserNotFound = &svcerr.Error{
+		Message:    "User not found",
+		VIMessage:  "Người dùng không tồn tại",
+		Code:       "AUTH-004",
+		HTTPStatus: http.StatusNotFound,
+		GRPCCode:   codes.NotFound,
 	}
 )

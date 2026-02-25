@@ -14,6 +14,7 @@ import (
 	"github.com/tdatIT/backend-go/internal/infras/repository/user"
 	"github.com/tdatIT/backend-go/internal/infras/security"
 	"github.com/tdatIT/backend-go/pkgs/decorator"
+	"github.com/tdatIT/backend-go/pkgs/utils/genid"
 	"gorm.io/gorm"
 )
 
@@ -73,6 +74,7 @@ func (r registerCommand) Handle(ctx context.Context, req *userdto.RegisterReq) (
 	refreshJTI := uuid.NewString()
 	now := time.Now()
 	sessionItem := &models.Session{
+		ID:         genid.GenerateNanoID(),
 		UserID:     item.ID,
 		RefreshJTI: refreshJTI,
 		UserAgent:  req.UserAgent,

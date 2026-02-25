@@ -16,7 +16,7 @@ type User struct {
 	LastLoginAt       *time.Time `json:"last_login_at,omitempty"`
 	IsActive          bool       `json:"is_active" gorm:"not null;default:true"`
 	CreatedAt         time.Time  `json:"created_at" gorm:"autoCreateTime"`
-	CreatedBy         uint64     `json:"created_by" gorm:"index"`
+	UpdatedAt         time.Time  `json:"updated_at" gorm:"autoUpdateTime"`
 
 	// Relationships
 	TaskGroups []*TaskGroup `json:"task_groups,omitempty" gorm:"foreignKey:UserID;references:ID"`

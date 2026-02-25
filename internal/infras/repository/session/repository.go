@@ -9,10 +9,10 @@ import (
 // Repository defines persistence operations for Session models.
 type Repository interface {
 	Create(ctx context.Context, item *models.Session) error
-	FindByID(ctx context.Context, id uint64) (*models.Session, error)
+	FindByID(ctx context.Context, id string) (*models.Session, error)
 	FindByRefreshJTI(ctx context.Context, jti string) (*models.Session, error)
-	FindBySessionID(ctx context.Context, sessionID uint64) (*models.Session, error)
+	FindBySessionID(ctx context.Context, sessionID string) (*models.Session, error)
 	Update(ctx context.Context, item *models.Session) error
-	RotateRefreshJTI(ctx context.Context, id uint64, oldJTI string, newJTI string) error
-	Deactivate(ctx context.Context, id uint64) error
+	RotateRefreshJTI(ctx context.Context, id string, oldJTI string, newJTI string) error
+	Deactivate(ctx context.Context, id string) error
 }
